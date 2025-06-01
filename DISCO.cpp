@@ -14,7 +14,7 @@ public:
     int platos;
     int pistas;
     int sectores;
-    int capSector; // en MB
+    int capSector; // en bytes
     int sectoresPorBloque;
     int espacioTotal;
 
@@ -27,7 +27,7 @@ public:
         cin >> pistas;
         cout << "Ingrese el numero de sectores: ";
         cin >> sectores;
-        cout << "Ingrese la capacidad de cada sector (en MB): ";
+        cout << "Ingrese la capacidad de cada sector (en Bytes): ";
         cin >> capSector;
         cout << "Ingrese el numero de sectores por bloque: ";
         cin >> sectoresPorBloque;
@@ -58,7 +58,36 @@ public:
                 }
             }
         }
+        FILE* metadata = fopen("Disco\\Plato0\\Superficie0\\Pista0\\Sector0.txt", "w");
+        if(metadata){
+            fprintf(metadata,"%i#%i#%i#%i#%i#%i#0", platos, pistas, sectores, capSector, sectoresPorBloque, espacioTotal); //el ultimo cero es para indicar si esta lleno o no
+            fclose(metadata);
+        }
     }
+
+    void recuperarDatosDisco() {
+        FILE* metadata = fopen("Disco\\Plato0\\Superficie0\\Pista0\\Sector0.txt", "r");
+        if (metadata) {
+            int platos, pistas, sectores, capSector, sectoresPorBloque, espacioTotal;
+            fscanf(metadata, "%d#%d#%d#%d#%d#%d#0", &platos, &pistas, &sectores, &capSector, &sectoresPorBloque, &espacioTotal);
+            fclose(metadata);
+            cout << "Datos del disco recuperados:\n";
+            cout << "Platos: " << platos << "\n";
+            cout << "Pistas: " << pistas << "\n";
+            cout << "Sectores: " << sectores << "\n";
+            cout << "Capacidad de cada sector: " << capSector << " Bytes\n";
+            cout << "Sectores por bloque: " << sectoresPorBloque << "\n";
+            cout << "Espacio total: " << espacioTotal << " Bytes\n";
+            platos = platos;
+            pistas = pistas;
+            sectores = sectores;
+            capSector = capSector;
+            sectoresPorBloque = sectoresPorBloque;
+            espacioTotal = espacioTotal;
+        } else {
+            cout << "No se pudo recuperar los datos del disco.\n";
+        }
+    }   
 
     void borrarTodoEnCarpeta(const char* path) { //recursivo
         char search_path[300];
@@ -124,8 +153,8 @@ public:
     }
 
     void mostrarInfo() {
-        cout << "Capacidad del disco: " << espacioTotal << " MB" << endl;
-        cout << "Capacidad del bloque: " << sectoresPorBloque * capSector << " MB" << endl;
+        cout << "Capacidad del disco: " << espacioTotal << " Bytes" << endl;
+        cout << "Capacidad del bloque: " << sectoresPorBloque * capSector << " Bytes" << endl;
         cout << "Numero de bloques por pista: " << sectores / sectoresPorBloque << endl;
         cout << "Numero de bloques por plato: " << (pistas * sectores / sectoresPorBloque) * 2 << endl;
     }
@@ -156,6 +185,7 @@ int main() {
                     opc=1;
                 }
                 cout << "Continuando en disco existente...\n";
+                disco.recuperarDatosDisco();
                 //funcion a hacer para recuperar datos del disco
                 opc=0;
                 ejecutando=false; // Salir del bucle
