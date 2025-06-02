@@ -41,6 +41,8 @@ public:
     void crearDisco() {
         crearCarpeta("Disco");
         char ruta_temporal[300];
+        int temporal=0;
+        int contadorBloques = 0;
         for (int p = 0; p < platos; p++) {
             sprintf(ruta_temporal, "Disco\\Plato%d", p);
             crearCarpeta(ruta_temporal);
@@ -52,8 +54,15 @@ public:
                     crearCarpeta(ruta_temporal);
                     for (int sector = 0; sector < sectores; sector++) {
                         sprintf(ruta_temporal, "Disco\\Plato%d\\Superficie%d\\Pista%d\\Sector%d.txt", p, sup, pista, sector);
-                        ofstream archivo(ruta_temporal);
-                        archivo.close();
+                        FILE* archivo = fopen(ruta_temporal, "w");
+                        temporal++;
+                        if(p==1 && sup==0){
+                            fprintf(archivo, "B%d#", contadorBloques);
+                            contadorBloques++;
+                            temporal=0; //reiniciar contador de sectores por bloque
+                        }
+                        fclose(archivo);
+
                     }
                 }
             }
