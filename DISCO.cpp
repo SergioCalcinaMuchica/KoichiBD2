@@ -85,6 +85,11 @@ public:
         FILE* metadata = fopen("Disco\\Plato0\\Superficie0\\Pista0\\Sector0.txt", "a");
         if(metadata){
             fprintf(metadata,"%i#%i#%i#%i#%i#%i\n", platos, pistas, sectores, capSector, sectoresPorBloque, espacioTotal); //el ultimo cero es para indicar si esta lleno o no
+            fprintf(metadata, "1"); //indicador de que el disco esta lleno (metadata)
+            for(int i=1;i<indiceBloque;i++){ //creacion inicial de "free space map"
+                fprintf(metadata,"0");
+            }
+            fprintf(metadata, "\n");
             fclose(metadata);
         }
     }
