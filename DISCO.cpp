@@ -1,12 +1,12 @@
 #include <iostream>
 #include <cstdio>
 #include <fstream>
-#include <windows.h>
+#include <filesystem>
 using namespace std;
+namespace fs = std::filesystem;
 
 bool existeCarpetaDisco() {
-    DWORD atributos = GetFileAttributesA("Disco");
-    return (atributos != INVALID_FILE_ATTRIBUTES) && (atributos & FILE_ATTRIBUTE_DIRECTORY);
+    return fs::exists("Disco") && fs::is_directory("Disco");
 }
 
 class Disco {
@@ -35,14 +35,14 @@ public:
     }
 
     void crearCarpeta(const char* ruta) {
-        CreateDirectoryA(ruta, NULL);
+        fs::create_directory(ruta);
     }
 
     void crearDisco() {
         crearCarpeta("Disco");
         char ruta_temporal[300];
-        int temporal=0;
-        int contadorBloques = 0;
+        int temporal=0; //a usar
+        int contadorBloques = 0; //a usar
         for (int p = 0; p < platos; p++) {
             sprintf(ruta_temporal, "Disco\\Plato%d", p);
             crearCarpeta(ruta_temporal);
@@ -55,12 +55,6 @@ public:
                     for (int sector = 0; sector < sectores; sector++) {
                         sprintf(ruta_temporal, "Disco\\Plato%d\\Superficie%d\\Pista%d\\Sector%d.txt", p, sup, pista, sector);
                         FILE* archivo = fopen(ruta_temporal, "w");
-                        temporal++;
-                        if(p==1 && sup==0){
-                            fprintf(archivo, "B%d#", contadorBloques);
-                            contadorBloques++;
-                            temporal=0; //reiniciar contador de sectores por bloque
-                        }
                         fclose(archivo);
 
                     }
@@ -87,78 +81,32 @@ public:
             cout << "Capacidad de cada sector: " << capSector << " Bytes\n";
             cout << "Sectores por bloque: " << sectoresPorBloque << "\n";
             cout << "Espacio total: " << espacioTotal << " Bytes\n";
-            platos = platos;
-            pistas = pistas;
-            sectores = sectores;
-            capSector = capSector;
-            sectoresPorBloque = sectoresPorBloque;
-            espacioTotal = espacioTotal;
+            this->platos = platos;
+            this->pistas = pistas;
+            this->sectores = sectores;
+            this->capSector = capSector;
+            this->sectoresPorBloque = sectoresPorBloque;
+            this->espacioTotal = espacioTotal;
         } else {
             cout << "No se pudo recuperar los datos del disco.\n";
         }
     }   
-
-    void borrarTodoEnCarpeta(const char* path) { //recursivo
-        char search_path[300];
-        sprintf(search_path, "%s\\*", path);
-
-        WIN32_FIND_DATAA fd; //estrucutra q tiene informacion de los archivos encontrados
-        HANDLE hFind = FindFirstFileA(search_path, &fd); //puntero o identificador del proceso de busqueda
-
-        if (hFind == INVALID_HANDLE_VALUE) return;
-
-        do {
-            if (strcmp(fd.cFileName, ".") == 0 || strcmp(fd.cFileName, "..") == 0) //evitar bucles infinitos 
-                continue;
-
-            char ruta_completa[300];
-            sprintf(ruta_completa, "%s\\%s", path, fd.cFileName);
-
-            if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) { //elementos FILE_.. activado? entonces es una carpeta
-                borrarTodoEnCarpeta(ruta_completa);           // recursivo
-                RemoveDirectoryA(ruta_completa);               // elimina carpeta vacía
-            } else {
-                DeleteFileA(ruta_completa);                    // elimina archivo
-            }
-
-        } while (FindNextFileA(hFind, &fd));
-
-        FindClose(hFind);
-    }
-
+    
     void borrarDisco() {
         const char* disco = "Disco";
-        borrarTodoEnCarpeta(disco);
-        RemoveDirectoryA(disco);
+        fs::remove_all(disco);
     }
 
     void mostrarArbol(const char* path, int nivel = 0) {
-        char search_path[300];
-        sprintf(search_path, "%s\\*", path);
-        WIN32_FIND_DATAA fd;
-        HANDLE hFind = FindFirstFileA(search_path, &fd);
-        if (hFind == INVALID_HANDLE_VALUE) return;
-
-        do {
-            const char* nombre = fd.cFileName;
-            if (strcmp(nombre, ".") == 0 || strcmp(nombre, "..") == 0)
-                continue;
-
-            // Sangría básica con espacios y |
+        for (const auto& entry : fs::directory_iterator(path)) {
             for (int i = 0; i < nivel; ++i) std::cout << "|   ";
-
-            // Usar +-- o |- como ramas
-            if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-                cout << "+-- " << nombre << "/" << std::endl;
-                char nueva_ruta[300];
-                sprintf(nueva_ruta, "%s\\%s", path, nombre);
-                mostrarArbol(nueva_ruta, nivel + 1); // Recursivo
+            if (fs::is_directory(entry.status())) {
+                cout << "+-- " << entry.path().filename().string() << "/" << std::endl;
+                mostrarArbol(entry.path().string().c_str(), nivel + 1);
             } else {
-                cout << "+-- " << nombre << std::endl;
+                cout << "+-- " << entry.path().filename().string() << std::endl;
             }
-
-        } while (FindNextFileA(hFind, &fd));
-        FindClose(hFind);
+        }
     }
 
     void mostrarInfo() {
