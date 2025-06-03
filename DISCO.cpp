@@ -9,6 +9,16 @@ bool existeCarpetaDisco() {
     return fs::exists("Disco") && fs::is_directory("Disco");
 }
 
+int contarDigitos(int n) {
+    if (n == 0) return 1;
+    int digitos = 0;
+    while (n != 0) {
+        n /= 10;
+        digitos++;
+    }
+    return digitos;
+}
+
 class Disco {
 public:
     int platos;
@@ -42,7 +52,10 @@ public:
         crearCarpeta("Disco");
         char ruta_temporal[300];
         int temporal=0; //a usar
-        int contadorBloques = 0; //a usar
+        int indiceBloque = 0; //a usar
+        int espacioBloque = sectoresPorBloque * capSector; //en bytes
+        int contadorBloques = sectoresPorBloque; //a usar
+        FILE* bloques = fopen("C:\\Users\\Usuario\\Documents\\KoichiBD\\Bloques.txt", "w"); //temporal cabeceras de bloques en un txt
         for (int p = 0; p < platos; p++) {
             sprintf(ruta_temporal, "Disco\\Plato%d", p);
             crearCarpeta(ruta_temporal);
@@ -55,15 +68,23 @@ public:
                     for (int sector = 0; sector < sectores; sector++) {
                         sprintf(ruta_temporal, "Disco\\Plato%d\\Superficie%d\\Pista%d\\Sector%d.txt", p, sup, pista, sector);
                         FILE* archivo = fopen(ruta_temporal, "w");
+                        if(contadorBloques==sectoresPorBloque){
+                            fprintf(archivo, "%i#0#0#%i\n",indiceBloque,espacioBloque-contarDigitos(indiceBloque)-6); //indicebloque/lleno o vacio/bloque a seguir/espacio disponible
+                            fprintf(bloques, "%i#0#0#%i\n",indiceBloque,espacioBloque-contarDigitos(indiceBloque)-6); //temporal
+                            indiceBloque++;
+                            contadorBloques=0;
+                        }
+                        contadorBloques++;
                         fclose(archivo);
 
                     }
                 }
             }
         }
-        FILE* metadata = fopen("Disco\\Plato0\\Superficie0\\Pista0\\Sector0.txt", "w");
+        fclose(bloques); //temporal
+        FILE* metadata = fopen("Disco\\Plato0\\Superficie0\\Pista0\\Sector0.txt", "a");
         if(metadata){
-            fprintf(metadata,"%i#%i#%i#%i#%i#%i#0", platos, pistas, sectores, capSector, sectoresPorBloque, espacioTotal); //el ultimo cero es para indicar si esta lleno o no
+            fprintf(metadata,"%i#%i#%i#%i#%i#%i\n", platos, pistas, sectores, capSector, sectoresPorBloque, espacioTotal); //el ultimo cero es para indicar si esta lleno o no
             fclose(metadata);
         }
     }
@@ -91,7 +112,7 @@ public:
             cout << "No se pudo recuperar los datos del disco.\n";
         }
     }   
-    
+
     void borrarDisco() {
         const char* disco = "Disco";
         fs::remove_all(disco);
