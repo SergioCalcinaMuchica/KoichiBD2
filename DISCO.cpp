@@ -46,8 +46,11 @@ void Disco::crearDisco() {
     char ruta_temporal[300];
     int temporal=0;
     int indiceBloque = 0;
-    int espacioBloque = sectoresPorBloque * capSector;
+    int espacioBloque = sectoresPorBloque * capSector; 
     int contadorBloques = sectoresPorBloque;
+    int cantdBloques = (pistas * sectores * platos * 2) / sectoresPorBloque;
+    cantdBloques = contarDigitos(cantdBloques);
+    int tamcabeceraBloque = cantdBloques + 3+ cantdBloques+1;
     FILE* bloques = fopen("Bloques.txt", "w");
     for (int p = 0; p < platos; p++) {
         sprintf(ruta_temporal, "Disco\\Plato%d", p);
@@ -62,8 +65,16 @@ void Disco::crearDisco() {
                     sprintf(ruta_temporal, "Disco\\Plato%d\\Superficie%d\\Pista%d\\Sector%d.txt", p, sup, pista, sector);
                     FILE* archivo = fopen(ruta_temporal, "w");
                     if(contadorBloques==sectoresPorBloque){
-                        fprintf(archivo, "%i#0#0#%i\n",indiceBloque,espacioBloque,espacioBloque);
-                        fprintf(bloques, "%i#0#0#%i\n",indiceBloque,espacioBloque,espacioBloque);
+                        fprintf(archivo,"%i", indiceBloque); //indice bloque
+                        int aux= cantdBloques - contarDigitos(indiceBloque);
+                        for(int i=0; i<aux; i++){
+                            fprintf(archivo,"-");
+                        }
+                        fprintf(archivo,"#0#");//indicador si esta ocupado o no
+                        for(int i=0; i<cantdBloques; i++){ //bloque siguiente
+                            fprintf(archivo,"-");
+                        }
+                        fprintf(archivo, "#%i\n",espacioBloque-tamcabeceraBloque);
                         indiceBloque++;
                         contadorBloques=0;
                     }
@@ -89,6 +100,8 @@ void Disco::crearDisco() {
 void Disco::recuperarDatosDisco() {
     FILE* metadata = fopen("Disco\\Plato0\\Superficie0\\Pista0\\Sector0.txt", "r");
     if (metadata) {
+        char buffer[256];
+        fgets(buffer, sizeof(buffer), metadata); // Leer la primera línea
         int platos, pistas, sectores, capSector, sectoresPorBloque, espacioTotal;
         fscanf(metadata, "%d#%d#%d#%d#%d#%d#0", &platos, &pistas, &sectores, &capSector, &sectoresPorBloque, &espacioTotal);
         fclose(metadata);
@@ -132,6 +145,9 @@ void Disco::mostrarInfo() {
     cout << "Capacidad del bloque: " << sectoresPorBloque * capSector << " Bytes" << endl;
     cout << "Numero de bloques por pista: " << sectores / sectoresPorBloque << endl;
     cout << "Numero de bloques por plato: " << (pistas * sectores / sectoresPorBloque) * 2 << endl;
+    cout << "Cantidad de pistas: " <<this->pistas << endl;
+    cout << "Cantidad de platos: "<< this->platos << endl;
+    cout << "Cantidad de sectores: " << this->sectores << endl;
 }
 
 void Disco::escribirSector(vector<char> &datos, int* ruta) {
@@ -158,10 +174,11 @@ vector<char> Disco::leerSector(int* ruta) {
         while (fread(&byte, sizeof(char), 1, archivo)) {
             datos.push_back(byte);
         }
-        return datos;
         fclose(archivo);
+        return datos;
     } else {
         cout << "Error al abrir el archivo.\n";
+        return datos; //sector corrupto o no encontrado
     }
 }
 

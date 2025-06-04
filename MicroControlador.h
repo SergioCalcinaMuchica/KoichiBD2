@@ -8,7 +8,7 @@ class MicroControlador {
     Disco* disco;
     int ruta[4];
     MicroControlador(Disco *d);
-    void ObtenerRuta(int) {}
+    void ObtenerRuta(int);
 };
 
 #endif
