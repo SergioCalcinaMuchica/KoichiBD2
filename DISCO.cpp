@@ -163,3 +163,14 @@ vector<char> Disco::leerSector(int* ruta) {
         cout << "Error al abrir el archivo.\n";
     }
 }
+
+vector<char> Disco::leerBloque(vector<int*> rutasSectores) {
+    vector<char> bloqueCompleto;
+
+    for (int* ruta : rutasSectores) {
+        vector<char> sectorDatos = leerSector(ruta);
+        bloqueCompleto.insert(bloqueCompleto.end(), sectorDatos.begin(), sectorDatos.end());
+    }
+
+    return bloqueCompleto;
+}

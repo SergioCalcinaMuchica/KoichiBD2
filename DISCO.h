@@ -24,4 +24,5 @@ public:
     void mostrarInfo();
     void escribirSector(vector<char>&, int*);
     vector<char> leerSector(int*);
+    vector<char> leerBloque(vector<int*>);
 };
