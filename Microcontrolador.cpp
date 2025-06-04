@@ -1,5 +1,5 @@
 #include "MicroControlador.h"
-#include "Disco.cpp"
+#include "Disco.h"
 
 MicroControlador::MicroControlador(Disco *d) {
     disco = d;

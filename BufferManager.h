@@ -3,7 +3,7 @@
 #include "MicroControlador.h"
 #include <vector>
 #include <unordered_map>
-
+using namespace std;
 class BufferManager {
 public:
     unordered_map<int, vector<char>> Bloques;

@@ -2,6 +2,7 @@
 #define MICROCONTROLADOR_H
 using namespace std;
 
+class Disco;
 class MicroControlador {
     public:
     Disco* disco;

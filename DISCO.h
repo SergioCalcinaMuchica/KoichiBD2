@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 #include <filesystem>
+#include <vector>
+using std::vector;
 
 bool existeCarpetaDisco();
 int contarDigitos(int n);
