@@ -51,7 +51,7 @@ void Disco::crearDisco() {
     int cantdBloques = (pistas * sectores * platos * 2) / sectoresPorBloque;
     cantdBloques = contarDigitos(cantdBloques);
     int tamcabeceraBloque = cantdBloques + 3+ cantdBloques+1;
-    FILE* bloques = fopen("Bloques.txt", "w");
+    FILE* bloques = fopen("Bloques.txt", "w"); //secundario
     for (int p = 0; p < platos; p++) {
         sprintf(ruta_temporal, "Disco\\Plato%d", p);
         crearCarpeta(ruta_temporal);
