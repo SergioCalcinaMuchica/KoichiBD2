@@ -4,9 +4,10 @@ using namespace std;
 
 class MicroControlador {
     public:
+    Disco* disco;
     int ruta[4];
-    MicroControlador();
-    void ObtenerRuta(int, Disco &) {}
+    MicroControlador(Disco *d);
+    void ObtenerRuta(int) {}
 };
 
 #endif
