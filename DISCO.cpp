@@ -1,9 +1,10 @@
+#include "DISCO.h"
+#include "MicroControlador.h"
 #include <iostream>
 #include <cstdio>
 #include <fstream>
-#include <filesystem>
-using namespace std;
 namespace fs = std::filesystem;
+using namespace std;
 
 bool existeCarpetaDisco() {
     return fs::exists("Disco") && fs::is_directory("Disco");
@@ -19,195 +20,146 @@ int contarDigitos(int n) {
     return digitos;
 }
 
-class Disco {
-public:
-    int platos;
-    int pistas;
-    int sectores;
-    int capSector; // en bytes
-    int sectoresPorBloque;
-    int espacioTotal;
+Disco::Disco() : platos(0), pistas(0), sectores(0), capSector(0), sectoresPorBloque(0), espacioTotal(0) {}
 
-    Disco() : platos(0), pistas(0), sectores(0), capSector(0), sectoresPorBloque(0), espacioTotal(0) {}
+void Disco::pedirDatos() {
+    cout << "Ingrese el numero de platos: ";
+    cin >> platos;
+    cout << "Ingrese el numero de pistas: ";
+    cin >> pistas;
+    cout << "Ingrese el numero de sectores: ";
+    cin >> sectores;
+    cout << "Ingrese la capacidad de cada sector (en Bytes): ";
+    cin >> capSector;
+    cout << "Ingrese el numero de sectores por bloque: ";
+    cin >> sectoresPorBloque;
+    espacioTotal = platos * 2 * pistas * sectores * capSector;
+}
 
-    void pedirDatos() {
-        cout << "Ingrese el numero de platos: ";
-        cin >> platos;
-        cout << "Ingrese el numero de pistas: ";
-        cin >> pistas;
-        cout << "Ingrese el numero de sectores: ";
-        cin >> sectores;
-        cout << "Ingrese la capacidad de cada sector (en Bytes): ";
-        cin >> capSector;
-        cout << "Ingrese el numero de sectores por bloque: ";
-        cin >> sectoresPorBloque;
-        espacioTotal = platos * 2 * pistas * sectores * capSector;
-    }
+void Disco::crearCarpeta(const char* ruta) {
+    fs::create_directory(ruta);
+}
 
-    void crearCarpeta(const char* ruta) {
-        fs::create_directory(ruta);
-    }
-
-    void crearDisco() {
-        crearCarpeta("Disco");
-        char ruta_temporal[300];
-        int temporal=0; //a usar
-        int indiceBloque = 0; //a usar
-        int espacioBloque = sectoresPorBloque * capSector; //en bytes
-        int contadorBloques = sectoresPorBloque; //a usar
-        FILE* bloques = fopen("C:\\Users\\Usuario\\Documents\\KoichiBD\\Bloques.txt", "w"); //temporal cabeceras de bloques en un txt
-        for (int p = 0; p < platos; p++) {
-            sprintf(ruta_temporal, "Disco\\Plato%d", p);
+void Disco::crearDisco() {
+    crearCarpeta("Disco");
+    char ruta_temporal[300];
+    int temporal=0;
+    int indiceBloque = 0;
+    int espacioBloque = sectoresPorBloque * capSector;
+    int contadorBloques = sectoresPorBloque;
+    FILE* bloques = fopen("Bloques.txt", "w");
+    for (int p = 0; p < platos; p++) {
+        sprintf(ruta_temporal, "Disco\\Plato%d", p);
+        crearCarpeta(ruta_temporal);
+        for (int sup = 0; sup < 2; sup++) {
+            sprintf(ruta_temporal, "Disco\\Plato%d\\Superficie%d", p, sup);
             crearCarpeta(ruta_temporal);
-            for (int sup = 0; sup < 2; sup++) {
-                sprintf(ruta_temporal, "Disco\\Plato%d\\Superficie%d", p, sup);
+            for (int pista = 0; pista < pistas; pista++) {
+                sprintf(ruta_temporal, "Disco\\Plato%d\\Superficie%d\\Pista%d", p, sup, pista);
                 crearCarpeta(ruta_temporal);
-                for (int pista = 0; pista < pistas; pista++) {
-                    sprintf(ruta_temporal, "Disco\\Plato%d\\Superficie%d\\Pista%d", p, sup, pista);
-                    crearCarpeta(ruta_temporal);
-                    for (int sector = 0; sector < sectores; sector++) {
-                        sprintf(ruta_temporal, "Disco\\Plato%d\\Superficie%d\\Pista%d\\Sector%d.txt", p, sup, pista, sector);
-                        FILE* archivo = fopen(ruta_temporal, "w");
-                        if(contadorBloques==sectoresPorBloque){
-                            fprintf(archivo, "%i#0#0#%i\n",indiceBloque,espacioBloque-contarDigitos(indiceBloque)-6); //indicebloque/lleno o vacio/bloque a seguir/espacio disponible
-                            fprintf(bloques, "%i#0#0#%i\n",indiceBloque,espacioBloque-contarDigitos(indiceBloque)-6); //temporal
-                            indiceBloque++;
-                            contadorBloques=0;
-                        }
-                        contadorBloques++;
-                        fclose(archivo);
-
+                for (int sector = 0; sector < sectores; sector++) {
+                    sprintf(ruta_temporal, "Disco\\Plato%d\\Superficie%d\\Pista%d\\Sector%d.txt", p, sup, pista, sector);
+                    FILE* archivo = fopen(ruta_temporal, "w");
+                    if(contadorBloques==sectoresPorBloque){
+                        fprintf(archivo, "%i#0#0#%i\n",indiceBloque,espacioBloque,espacioBloque);
+                        fprintf(bloques, "%i#0#0#%i\n",indiceBloque,espacioBloque,espacioBloque);
+                        indiceBloque++;
+                        contadorBloques=0;
                     }
+                    contadorBloques++;
+                    fclose(archivo);
                 }
             }
         }
-        fclose(bloques); //temporal
-        FILE* metadata = fopen("Disco\\Plato0\\Superficie0\\Pista0\\Sector0.txt", "a");
-        if(metadata){
-            fprintf(metadata,"%i#%i#%i#%i#%i#%i\n", platos, pistas, sectores, capSector, sectoresPorBloque, espacioTotal); //el ultimo cero es para indicar si esta lleno o no
-            fprintf(metadata, "1"); //indicador de que el disco esta lleno (metadata)
-            for(int i=1;i<indiceBloque;i++){ //creacion inicial de "free space map"
-                fprintf(metadata,"0");
-            }
-            fprintf(metadata, "\n");
-            fclose(metadata);
-        }
     }
+    fclose(bloques);
+    FILE* metadata = fopen("Disco\\Plato0\\Superficie0\\Pista0\\Sector0.txt", "a");
+    if(metadata){
+        fprintf(metadata,"%i#%i#%i#%i#%i#%i\n", platos, pistas, sectores, capSector, sectoresPorBloque, espacioTotal);
+        fprintf(metadata, "1");
+        for(int i=1;i<indiceBloque;i++){
+            fprintf(metadata,"0");
+        }
+        fprintf(metadata, "\n");
+        fclose(metadata);
+    }
+}
 
-    void recuperarDatosDisco() {
-        FILE* metadata = fopen("Disco\\Plato0\\Superficie0\\Pista0\\Sector0.txt", "r");
-        if (metadata) {
-            int platos, pistas, sectores, capSector, sectoresPorBloque, espacioTotal;
-            fscanf(metadata, "%d#%d#%d#%d#%d#%d#0", &platos, &pistas, &sectores, &capSector, &sectoresPorBloque, &espacioTotal);
-            fclose(metadata);
-            cout << "Datos del disco recuperados:\n";
-            cout << "Platos: " << platos << "\n";
-            cout << "Pistas: " << pistas << "\n";
-            cout << "Sectores: " << sectores << "\n";
-            cout << "Capacidad de cada sector: " << capSector << " Bytes\n";
-            cout << "Sectores por bloque: " << sectoresPorBloque << "\n";
-            cout << "Espacio total: " << espacioTotal << " Bytes\n";
-            this->platos = platos;
-            this->pistas = pistas;
-            this->sectores = sectores;
-            this->capSector = capSector;
-            this->sectoresPorBloque = sectoresPorBloque;
-            this->espacioTotal = espacioTotal;
+void Disco::recuperarDatosDisco() {
+    FILE* metadata = fopen("Disco\\Plato0\\Superficie0\\Pista0\\Sector0.txt", "r");
+    if (metadata) {
+        int platos, pistas, sectores, capSector, sectoresPorBloque, espacioTotal;
+        fscanf(metadata, "%d#%d#%d#%d#%d#%d#0", &platos, &pistas, &sectores, &capSector, &sectoresPorBloque, &espacioTotal);
+        fclose(metadata);
+        cout << "Datos del disco recuperados:\n";
+        cout << "Platos: " << platos << "\n";
+        cout << "Pistas: " << pistas << "\n";
+        cout << "Sectores: " << sectores << "\n";
+        cout << "Capacidad de cada sector: " << capSector << " Bytes\n";
+        cout << "Sectores por bloque: " << sectoresPorBloque << "\n";
+        cout << "Espacio total: " << espacioTotal << " Bytes\n";
+        this->platos = platos;
+        this->pistas = pistas;
+        this->sectores = sectores;
+        this->capSector = capSector;
+        this->sectoresPorBloque = sectoresPorBloque;
+        this->espacioTotal = espacioTotal;
+    } else {
+        cout << "No se pudo recuperar los datos del disco.\n";
+    }
+}
+
+void Disco::borrarDisco() {
+    const char* disco = "Disco";
+    fs::remove_all(disco);
+}
+
+void Disco::mostrarArbol(const char* path, int nivel) {
+    for (const auto& entry : fs::directory_iterator(path)) {
+        for (int i = 0; i < nivel; ++i) cout << "|   ";
+        if (fs::is_directory(entry.status())) {
+            cout << "+-- " << entry.path().filename().string() << "/" <<endl;
+            mostrarArbol(entry.path().string().c_str(), nivel + 1);
         } else {
-            cout << "No se pudo recuperar los datos del disco.\n";
-        }
-    }   
-
-    void borrarDisco() {
-        const char* disco = "Disco";
-        fs::remove_all(disco);
-    }
-
-    void mostrarArbol(const char* path, int nivel = 0) {
-        for (const auto& entry : fs::directory_iterator(path)) {
-            for (int i = 0; i < nivel; ++i) std::cout << "|   ";
-            if (fs::is_directory(entry.status())) {
-                cout << "+-- " << entry.path().filename().string() << "/" << std::endl;
-                mostrarArbol(entry.path().string().c_str(), nivel + 1);
-            } else {
-                cout << "+-- " << entry.path().filename().string() << std::endl;
-            }
+            cout << "+-- " << entry.path().filename().string() <<endl;
         }
     }
+}
 
-    void mostrarInfo() {
-        cout << "Capacidad del disco: " << espacioTotal << " Bytes" << endl;
-        cout << "Capacidad del bloque: " << sectoresPorBloque * capSector << " Bytes" << endl;
-        cout << "Numero de bloques por pista: " << sectores / sectoresPorBloque << endl;
-        cout << "Numero de bloques por plato: " << (pistas * sectores / sectoresPorBloque) * 2 << endl;
-    }
-};
+void Disco::mostrarInfo() {
+    cout << "Capacidad del disco: " << espacioTotal << " Bytes" << endl;
+    cout << "Capacidad del bloque: " << sectoresPorBloque * capSector << " Bytes" << endl;
+    cout << "Numero de bloques por pista: " << sectores / sectoresPorBloque << endl;
+    cout << "Numero de bloques por plato: " << (pistas * sectores / sectoresPorBloque) * 2 << endl;
+}
 
-int main() {
-    Disco disco;
-    int opc=0;
-    bool ejecutando = true;
-    string entrada;
-    cout<<"Bienvenido al sistema de gestion de discos\n";
-    cout<<"1)Crear disco\n";
-    cout<<"2)Continuar en disco\n";
-    cout<<"Seleccione una opcion: ";
-    cin >> opc;
-    while(ejecutando){
-        switch(opc){
-            case 1:
-                disco.borrarDisco(); // Limpia antes de crear
-                disco.pedirDatos();
-                disco.crearDisco();
-                opc=0;
-                ejecutando=false;
-                break;
-            case 2:
-                if(!existeCarpetaDisco()){
-                    cout<<"NINGUN DISCO EXISTE, CREE UNO PRIMERO\n";
-                    opc=1;
-                }
-                cout << "Continuando en disco existente...\n";
-                disco.recuperarDatosDisco();
-                //funcion a hacer para recuperar datos del disco
-                opc=0;
-                ejecutando=false; // Salir del bucle
-                break;
-            default:
-                cout << "Opcion invalida. Saliendo.\n";
-                opc=1;
+void Disco::escribirSector(vector<char> &datos, int* ruta) {
+    char direccion[300];
+    sprintf(direccion, "Disco\\Plato%d\\Superficie%d\\Pista%d\\Sector%d.txt", ruta[0], ruta[1], ruta[2], ruta[3]);
+    FILE* archivo = fopen(direccion, "w");
+    if (archivo) {
+        for (char byte : datos) {
+            fwrite(&byte, sizeof(char), 1, archivo);
         }
+        fclose(archivo);
+    } else {
+        cout << "Error al abrir el archivo.\n";
     }
+}
 
-    ejecutando=true;    
-    while(ejecutando){
-        cout << "Bienvenido al sistema de gestion de discos\n";
-        cout << "1) Mostrar informacion del disco\n";
-        cout<<  "2) Salir\n";
-        cout << "3) Adicionar CSV\n";
-        cout << "4) Mostrar arbol del disco\n";
-        cout << "Seleccione una opcion: ";
-        cin >> opc;
-        switch (opc){
-            case 1:
-                cout<<"----------------------------\n";
-                disco.mostrarInfo();
-                cout<<"----------------------------\n";
-                break;
-            case 2:
-                ejecutando=false;
-                break;
-            case 3:
-                cin>>entrada;
-                break;
-            case 4:
-                cout << "Arbol del disco:\n";
-                disco.mostrarArbol("Disco");
-                break;
-            default:
-                cout << "Opcion invalida. Saliendo.\n";
-                return 1;
+vector<char> Disco::leerSector(int* ruta) {
+    char direccion[300];
+    sprintf(direccion, "Disco\\Plato%d\\Superficie%d\\Pista%d\\Sector%d.txt", ruta[0], ruta[1], ruta[2], ruta[3]);
+    FILE* archivo = fopen(direccion, "r");
+    vector<char> datos;
+    if (archivo) {
+        char byte;
+        while (fread(&byte, sizeof(char), 1, archivo)) {
+            datos.push_back(byte);
         }
+        return datos;
+        fclose(archivo);
+    } else {
+        cout << "Error al abrir el archivo.\n";
     }
-    return 0;
 }
