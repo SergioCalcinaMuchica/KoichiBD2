@@ -174,3 +174,14 @@ vector<char> Disco::leerBloque(vector<int*> rutasSectores) {
 
     return bloqueCompleto;
 }
+
+void Disco::escribirBloque(vector<int*> rutasSectores, vector<char>& bloqueCompleto) {
+    int contador = 0;
+    for (int* ruta : rutasSectores) {
+        vector<char> sectorDatos;
+        for (int i = 0; i < capSector && contador < bloqueCompleto.size(); i++, contador++) {
+            sectorDatos.push_back(bloqueCompleto[contador]);
+        }
+        escribirSector(sectorDatos, ruta);
+    }
+}
