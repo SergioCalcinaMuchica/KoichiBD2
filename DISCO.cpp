@@ -47,11 +47,10 @@ void Disco::crearDisco() {
     int temporal=0;
     int indiceBloque = 0;
     int espacioBloque = sectoresPorBloque * capSector; 
-    int contadorBloques = sectoresPorBloque;
     int cantdBloques = (pistas * sectores * platos * 2) / sectoresPorBloque;
     cantdBloques = contarDigitos(cantdBloques);
-    int tamcabeceraBloque = cantdBloques + 3+ cantdBloques+1;
-    FILE* bloques = fopen("Bloques.txt", "w"); //secundario
+    int tamcabeceraBloque = cantdBloques + 3+ cantdBloques+1+contarDigitos(espacioBloque)+1;
+    // FILE* bloques = fopen("Bloques.txt", "w"); secundario
     for (int p = 0; p < platos; p++) {
         sprintf(ruta_temporal, "Disco\\Plato%d", p);
         crearCarpeta(ruta_temporal);
@@ -64,7 +63,7 @@ void Disco::crearDisco() {
                 for (int sector = 0; sector < sectores; sector++) {
                     sprintf(ruta_temporal, "Disco\\Plato%d\\Superficie%d\\Pista%d\\Sector%d.txt", p, sup, pista, sector);
                     FILE* archivo = fopen(ruta_temporal, "w");
-                    if(contadorBloques==sectoresPorBloque){
+                    if(p==0 && sup==0){
                         fprintf(archivo,"%i", indiceBloque); //indice bloque
                         int aux= cantdBloques - contarDigitos(indiceBloque);
                         for(int i=0; i<aux; i++){
@@ -76,19 +75,17 @@ void Disco::crearDisco() {
                         }
                         fprintf(archivo, "#%i\n",espacioBloque-tamcabeceraBloque);
                         indiceBloque++;
-                        contadorBloques=0;
                     }
-                    contadorBloques++;
                     fclose(archivo);
                 }
             }
         }
     }
-    fclose(bloques);
+    //fclose(bloques);
     FILE* metadata = fopen("Disco\\Plato0\\Superficie0\\Pista0\\Sector0.txt", "a");
     if(metadata){
-        fprintf(metadata,"%i#%i#%i#%i#%i#%i\n", platos, pistas, sectores, capSector, sectoresPorBloque, espacioTotal);
-        fprintf(metadata, "1");
+        fprintf(metadata,"%i#%i#%i#%i#%i#%i\n", platos, pistas, sectores, capSector, sectoresPorBloque, espacioTotal-(indiceBloque*tamcabeceraBloque)-indiceBloque);//espacio disponible
+        fprintf(metadata, "1"); //bitmap de bloques indicando si estan vacio o no
         for(int i=1;i<indiceBloque;i++){
             fprintf(metadata,"0");
         }

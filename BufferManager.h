@@ -11,4 +11,6 @@ public:
     MicroControlador* micro;
 
     BufferManager(Disco* disco, MicroControlador* mc);
+    void cargarBloque(int LBA);
+    void escribirBloque(int LBA);
 };

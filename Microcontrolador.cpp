@@ -16,3 +16,9 @@ void MicroControlador::ObtenerRuta(int LBA) {
     ruta[2] = LBA/disco->sectores; // Pista
     ruta[3] = LBA % disco->sectores; // Sector
 }
+
+void MicroControlador::putRuta(int* r) {
+    for (int i = 0; i < 4; i++) {
+        ruta[i] = r[i];
+    }
+}
