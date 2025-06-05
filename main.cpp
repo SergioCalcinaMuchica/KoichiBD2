@@ -34,7 +34,16 @@ void actualizarBitmapEnDatos(vector<char>& datos, const string& nuevoBitmap) {
         datos[indice + i] = nuevoBitmap[i];
     }
 }
-
+/*
+bool suficienteEspacio(int bloquecomp, BufferManager& buffer, string m){
+    int tamBloque=(buffer.disco->sectoresPorBloque)*(buffer.disco->capSector);
+    if(m.size()+buffer.Bloques[bloquecomp].size()>tamBloque){
+        return false;
+    }else{
+        return true;
+    }
+}
+*/
 void insertaresquema(BufferManager& buffer) {
     string nombreEsquema;
     char variableFijo;
@@ -72,6 +81,7 @@ void insertaresquema(BufferManager& buffer) {
             bitmapt[indice]='1';
             actualizarBitmapEnDatos(datos,bitmapt);
             string lineaMeta = nombreEsquema + "#" + to_string(indice) + "\n";
+            if(datos.size())
             datos.insert(datos.end(), lineaMeta.begin(), lineaMeta.end());
             buffer.escribirBloque(0);
         }
@@ -80,6 +90,7 @@ void insertaresquema(BufferManager& buffer) {
         return;
     }
 }
+
 
 int main() {
     int opc = 0;
