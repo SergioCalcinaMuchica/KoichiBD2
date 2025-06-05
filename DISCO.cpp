@@ -84,7 +84,8 @@ void Disco::crearDisco() {
     //fclose(bloques);
     FILE* metadata = fopen("Disco\\Plato0\\Superficie0\\Pista0\\Sector0.txt", "a");
     if(metadata){
-        fprintf(metadata,"%i#%i#%i#%i#%i#%i\n", platos, pistas, sectores, capSector, sectoresPorBloque, espacioTotal-(indiceBloque*tamcabeceraBloque)-indiceBloque);//espacio disponible
+        espacioTotal= espacioTotal-(indiceBloque*tamcabeceraBloque)-indiceBloque;
+        fprintf(metadata,"%i#%i#%i#%i#%i#%i\n", platos, pistas, sectores, capSector, sectoresPorBloque, espacioTotal);//espacio disponible
         fprintf(metadata, "1"); //bitmap de bloques indicando si estan vacio o no
         for(int i=1;i<indiceBloque;i++){
             fprintf(metadata,"0");
