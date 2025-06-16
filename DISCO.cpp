@@ -44,13 +44,16 @@ void Disco::crearCarpeta(const char* ruta) {
 void Disco::crearDisco() {
     crearCarpeta("Disco");
     char ruta_temporal[300];
-    int temporal=0;
     int indiceBloque = 0;
     int espacioBloque = sectoresPorBloque * capSector; 
     int cantdBloques = (pistas * sectores * platos * 2) / sectoresPorBloque;
     cantdBloques = contarDigitos(cantdBloques);
-    int tamcabeceraBloque = cantdBloques + 3+ cantdBloques+1+contarDigitos(espacioBloque)+1;
-    // FILE* bloques = fopen("Bloques.txt", "w"); secundario
+    int tamcabeceraBloque = cantdBloques + 3+ cantdBloques+1+contarDigitos(espacioBloque);
+    int contadorB=sectoresPorBloque;
+    
+    long posEspacioDisponibleBloque;
+    long posidSiguiente;
+    long posDisponible;
     for (int p = 0; p < platos; p++) {
         sprintf(ruta_temporal, "Disco\\Plato%d", p);
         crearCarpeta(ruta_temporal);
@@ -62,41 +65,181 @@ void Disco::crearDisco() {
                 crearCarpeta(ruta_temporal);
                 for (int sector = 0; sector < sectores; sector++) {
                     sprintf(ruta_temporal, "Disco\\Plato%d\\Superficie%d\\Pista%d\\Sector%d.txt", p, sup, pista, sector);
-                    FILE* archivo = fopen(ruta_temporal, "w");
-                    if(p==0 && sup==0){
+                    FILE* archivo = fopen(ruta_temporal, "wb");
+                    if(contadorB==sectoresPorBloque){
                         fprintf(archivo,"%i", indiceBloque); //indice bloque
                         int aux= cantdBloques - contarDigitos(indiceBloque);
                         for(int i=0; i<aux; i++){
                             fprintf(archivo,"-");
                         }
+                        posDisponible=ftell(archivo)+1;
                         fprintf(archivo,"#0#");//indicador si esta ocupado o no
+                        posidSiguiente=ftell(archivo);
                         for(int i=0; i<cantdBloques; i++){ //bloque siguiente
                             fprintf(archivo,"-");
                         }
-                        fprintf(archivo, "#%i\n",espacioBloque-tamcabeceraBloque);
+                        posEspacioDisponibleBloque=ftell(archivo)+1;
+                        fprintf(archivo, "#%i",espacioBloque-tamcabeceraBloque);
+                        aux=contarDigitos(espacioBloque)-contarDigitos(espacioBloque-tamcabeceraBloque);
+                        for(int i=0;i<aux;i++){
+                            fprintf(archivo,"-");
+                        }
+                        fprintf(archivo,"\n");
                         indiceBloque++;
+                        contadorB=0;
                     }
+                    contadorB++;
                     fclose(archivo);
                 }
             }
         }
     }
-    //fclose(bloques);
-    FILE* metadata = fopen("Disco\\Plato0\\Superficie0\\Pista0\\Sector0.txt", "a");
+    
+    FILE* metadata = fopen("Disco\\Plato0\\Superficie0\\Pista0\\Sector0.txt", "ab");
     if(metadata){
-        espacioTotal= espacioTotal-(indiceBloque*tamcabeceraBloque)-indiceBloque;
+        espacioTotal= espacioTotal-(indiceBloque*tamcabeceraBloque)-6-contarDigitos(platos)-contarDigitos(pistas)-contarDigitos(sectores)-contarDigitos(capSector)-contarDigitos(sectoresPorBloque);
+        espacioTotal=espacioTotal - contarDigitos(espacioTotal)-indiceBloque;
         fprintf(metadata,"%i#%i#%i#%i#%i#%i\n", platos, pistas, sectores, capSector, sectoresPorBloque, espacioTotal);//espacio disponible
-        fprintf(metadata, "1"); //bitmap de bloques indicando si estan vacio o no
-        for(int i=1;i<indiceBloque;i++){
-            fprintf(metadata,"0");
+        long posBit2=ftell(metadata);
+        fclose(metadata);
+        metadata = fopen("Disco\\Plato0\\Superficie0\\Pista0\\Sector0.txt", "rb"); // Modo binario
+        long bytesOcupados;
+        //saber cuantos bytes ocupados van
+        if (metadata) {
+            fseek(metadata, 0, SEEK_END);          // Moverse al final
+            bytesOcupados=ftell(metadata); 
+            fclose(metadata);
         }
-        fprintf(metadata, "\n");
+
+        int LBA=0;
+        bool unsoloBloque=true;
+        char direccion[300];
+        MicroControlador pre = MicroControlador(this);
+        long capcdbloque=capSector*sectoresPorBloque;
+        long acumBloque=bytesOcupados;
+        int contadorBloque=1;
+        pre.ObtenerRuta(0);
+        sprintf(direccion, "Disco\\Plato%d\\Superficie%d\\Pista%d\\Sector%d.txt", pre.ruta[0], pre.ruta[1], pre.ruta[2], pre.ruta[3]);
+        metadata = fopen(direccion, "ab");
+        //llenado de bitmap, metadata sobre bloques disponibles o no
+        int espacioOcupadoASumarAlDisco = 0; //bytes que van s
+        int LBAmin = 0;
+        for(int i=0;i<indiceBloque;i++){
+            bytesOcupados++;
+            acumBloque++;
+            if(bytesOcupados>capSector){
+                fclose(metadata);
+                LBA++;
+                if(LBA%sectoresPorBloque==0){ //cambio de bloque aqui hacer los cambios en los campos correspondientes
+                    cout<<"si"<<LBA<<endl;
+                    contadorBloque++;
+                    unsoloBloque=false;
+
+                    if(LBA-sectoresPorBloque==LBAmin){
+                        LBAmin=LBA;
+                    }
+
+                    pre.ObtenerRuta(LBA-sectoresPorBloque);
+                    sprintf(direccion, "Disco\\Plato%d\\Superficie%d\\Pista%d\\Sector%d.txt", pre.ruta[0], pre.ruta[1], pre.ruta[2], pre.ruta[3]);
+                    metadata = fopen(direccion, "r+b");
+                    fseek(metadata,posDisponible,SEEK_SET);
+                    fputc('1', metadata);
+                    fseek(metadata,posEspacioDisponibleBloque,SEEK_SET);
+                    string espaux= to_string(capcdbloque - (acumBloque-1));
+                    cout<<capcdbloque<<"---"<<acumBloque<<endl;
+                    cout<<espaux<<endl;
+                    int espaxiosaux=contarDigitos(capcdbloque)-contarDigitos(capcdbloque - (acumBloque-1));
+                    for(int i=0;i<espaux.size();i++){
+                        fputc(espaux[i],metadata);
+                    }
+                    for(int i=0;i<espaxiosaux;i++){
+                        fputc('-',metadata);
+                    }
+                    fseek(metadata,posidSiguiente,SEEK_SET);
+                    espaux=to_string(contadorBloque-1);
+                    for(int i=0;i<espaux.size();i++){
+                        fputc(espaux[i],metadata);
+                    }
+                    fclose(metadata);
+                    pre.ObtenerRuta(LBA);
+                    sprintf(direccion, "Disco\\Plato%d\\Superficie%d\\Pista%d\\Sector%d.txt", pre.ruta[0], pre.ruta[1], pre.ruta[2], pre.ruta[3]);
+                    metadata = fopen(direccion, "r+b");
+                    fseek(metadata,posDisponible,SEEK_SET);
+                    fputc('1', metadata);
+                    fclose(metadata);
+                }
+
+                pre.ObtenerRuta(LBA);
+                sprintf(direccion, "Disco\\Plato%d\\Superficie%d\\Pista%d\\Sector%d.txt", pre.ruta[0], pre.ruta[1], pre.ruta[2], pre.ruta[3]);
+                metadata = fopen(direccion, "rb");
+                if (metadata) {
+                    fseek(metadata, 0, SEEK_END);          // Moverse al final
+                    bytesOcupados=ftell(metadata);
+                    if(LBA%sectoresPorBloque==0){
+                        acumBloque=bytesOcupados;
+                    }
+                    fclose(metadata);
+                }
+                
+                metadata = fopen(direccion, "ab");//cambio de sector logico
+                fprintf(metadata,"0");
+                bytesOcupados++;
+                if(LBA%sectoresPorBloque==0){
+                    acumBloque++;
+                }
+            }else{
+                fprintf(metadata,"0");
+            }
+        }
+        fclose(metadata);
+        if(unsoloBloque==true){
+                pre.ObtenerRuta(0);
+                sprintf(direccion, "Disco\\Plato%d\\Superficie%d\\Pista%d\\Sector%d.txt", pre.ruta[0], pre.ruta[1], pre.ruta[2], pre.ruta[3]);
+                metadata = fopen(direccion, "r+b");
+                fseek(metadata,posDisponible,SEEK_SET);
+                fputc('1', metadata);
+                fseek(metadata,posEspacioDisponibleBloque,SEEK_SET);
+                string espaux= to_string(capcdbloque - acumBloque);
+                int espaxiosaux=contarDigitos(capcdbloque)-contarDigitos(capcdbloque - acumBloque);
+                for(int i=0;i<espaux.size();i++){
+                    fputc(espaux[i],metadata);
+                }
+                for(int i=0;i<espaxiosaux;i++){
+                    fputc('-',metadata);
+                }
+        }
+        fclose(metadata);
+        //LBAmin
+        pre.ObtenerRuta(LBAmin);
+        sprintf(direccion, "Disco\\Plato%d\\Superficie%d\\Pista%d\\Sector%d.txt", pre.ruta[0], pre.ruta[1], pre.ruta[2], pre.ruta[3]);
+        metadata = fopen(direccion, "r+b");
+        fseek(metadata,posDisponible,SEEK_SET);
+        fputc('1', metadata);
+        fseek(metadata,posEspacioDisponibleBloque,SEEK_SET);
+        string espaux= to_string(capcdbloque - acumBloque);
+        int espaxiosaux=contarDigitos(capcdbloque)-contarDigitos(capcdbloque - acumBloque);
+        for(int i=0;i<espaux.size();i++){
+            fputc(espaux[i],metadata);
+        }
+        for(int i=0;i<espaxiosaux;i++){
+            fputc('-',metadata);
+        }
+        
+        fclose(metadata);
+        metadata = fopen("Disco\\Plato0\\Superficie0\\Pista0\\Sector0.txt", "r+b");
+        while(contadorBloque!=0){ //provisional pero deberia mejorar, imaginate que toque poner 1 a bits que esten a otro bloque. PENDIENTE
+            fseek(metadata,posBit2,SEEK_SET);
+            posBit2++;
+            fputc('1', metadata);
+            contadorBloque--;
+        }
+
         fclose(metadata);
     }
 }
 
 void Disco::recuperarDatosDisco() {
-    FILE* metadata = fopen("Disco\\Plato0\\Superficie0\\Pista0\\Sector0.txt", "r");
+    FILE* metadata = fopen("Disco\\Plato0\\Superficie0\\Pista0\\Sector0.txt", "rb");
     if (metadata) {
         char buffer[256];
         fgets(buffer, sizeof(buffer), metadata); // Leer la primera línea
@@ -151,7 +294,7 @@ void Disco::mostrarInfo() {
 void Disco::escribirSector(vector<char> &datos, int* ruta) {
     char direccion[300];
     sprintf(direccion, "Disco\\Plato%d\\Superficie%d\\Pista%d\\Sector%d.txt", ruta[0], ruta[1], ruta[2], ruta[3]);
-    FILE* archivo = fopen(direccion, "w");
+    FILE* archivo = fopen(direccion, "wb");
     if (archivo) {
         for (char byte : datos) {
             fwrite(&byte, sizeof(char), 1, archivo);
@@ -165,7 +308,7 @@ void Disco::escribirSector(vector<char> &datos, int* ruta) {
 vector<char> Disco::leerSector(int* ruta) {
     char direccion[300];
     sprintf(direccion, "Disco\\Plato%d\\Superficie%d\\Pista%d\\Sector%d.txt", ruta[0], ruta[1], ruta[2], ruta[3]);
-    FILE* archivo = fopen(direccion, "r");
+    FILE* archivo = fopen(direccion, "rb");
     vector<char> datos;
     if (archivo) {
         char byte;
@@ -180,6 +323,7 @@ vector<char> Disco::leerSector(int* ruta) {
     }
 }
 
+/*
 vector<char> Disco::leerBloque(vector<int*> rutasSectores) {
     vector<char> bloqueCompleto;
 
@@ -201,3 +345,4 @@ void Disco::escribirBloque(vector<int*> rutasSectores, vector<char>& bloqueCompl
         escribirSector(sectorDatos, ruta);
     }
 }
+*/

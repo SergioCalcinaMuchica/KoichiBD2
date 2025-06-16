@@ -2,6 +2,7 @@
 #include "DISCO.h"
 #include "MicroControlador.h"
 #include "BufferManager.h"
+#include "Bloque.h"
 using namespace std;
 Disco disco;
 string extraerBitmap(const vector<char>& datos) {
@@ -71,7 +72,7 @@ void insertaresquema(BufferManager& buffer) {
         }
         //revisar si hay bloque disponible en base al bitmap
         buffer.cargarBloque(0); //cargar bloque 0 que es el bitmap
-        vector<char>& datos = buffer.Bloques[0];
+        vector<char>& datos = buffer.Bloques[0].datos;
         string bitmapt= extraerBitmap(datos);
         if(bitmapt.find('0') == string::npos){
             cout<<"TODOS BLOQUES LLENOS"<<endl;
@@ -146,4 +147,4 @@ int main() {
     return 0;
 }
 
-//g++ main.cpp Microcontrolador.cpp Disco.cpp BufferManager.cpp -o main
+//g++ main.cpp Microcontrolador.cpp Disco.cpp BufferManager.cpp Bloque.cpp -o main
