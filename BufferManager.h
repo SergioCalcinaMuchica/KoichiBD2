@@ -19,4 +19,5 @@ public:
 
     Bloque& obtenerBloque(int LBA, char modo, bool pin);  // modo: 'L' o 'E'
     void liberarBloque(int LBA, bool modificado); // true si se modificó
+    void liberarBloqueSinEscribir(int LBA); //libera bloque sin la necesidad de escribir en el disco 
 };

@@ -5,6 +5,69 @@ SistemaGestor::SistemaGestor(BufferManager* bf){
     sectoresPorBloque = buffer->sectoresPorBloque;
 }
 
+int BloqueNDisponible(){ //devolvera el indice del siguiente bloque disponible
+  int lba=0;
+  bool encontrado=false;
+  int indice=0; //posicion, LBA del bloque p
+  int i=0;
+  while(encontrado==false){
+    i=0;
+    Bloque& busq = buffer->obtenerBloque(lba,'L',0);
+    while(busq.datos[i]!='\n') i++;
+    i++;
+    while(busq.datos[i]!='\n') i++;
+    i++;
+    while(busq.datos[i]!='0'){
+      i++;
+      indice++;
+      if(i==busq.datos.size()){
+        break; //se termino el bloque, hay que verificar si sigue el bitmap en otro bloque y si no es así entonces ya no hay bloques disponibles
+      }
+      if(busq.datos[i]==1){
+        return indice;
+      }
+    }
+    if(busq.idsiguiente==0){
+      cout<<"YA NO HAY BLOQUES DISPONIBLES";
+      return 0; //indicador, 0 es si no hay bloques disponibles
+    }
+    busq.liberarBloqueSinEscribir(lba);
+    lba=busq.idsiguiente;
+  }
+}
+
+//contador del bitmap para saber q bloque esta disponible funcion que devolveria 
+string SistemaGestor::extraerBitmap(vector<char>& datos){ //
+    int indice = 0;
+    // Saltar la primera línea (cabecera)
+    while (indice < datos.size() && datos[indice] != '\n') indice++;
+    indice++;
+    // Saltar la segunda línea (cabecera)
+    while (indice < datos.size() && datos[indice] != '\n') indice++;
+    indice++;
+    // Extraer el bitmap hasta el siguiente salto de línea
+    string bitmap;
+    while (indice < datos.size() && datos[indice] != '\n') {
+        bitmap += datos[indice];
+        indice++;
+    }
+    return bitmap;
+}
+
+void SistemaGestor::actualizarBitmapEnDatos(vector<char>& datos, const string& nuevoBitmap){
+    int indice = 0;
+    // Saltar la primera línea (cabecera)
+    while (indice < datos.size() && datos[indice] != '\n') indice++;
+    indice++;
+    // Saltar la segunda línea (cabecera)
+    while (indice < datos.size() && datos[indice] != '\n') indice++;
+    indice++;
+    // Ahora 'indice' apunta al inicio del bitmap
+    for (size_t i = 0; i < nuevoBitmap.size() && (indice + i) < datos.size(); ++i) {
+        datos[indice + i] = nuevoBitmap[i];
+    }
+}
+
 bool SistemaGestor::verificarEsquemaExiste(string nombreEsquema, int* LBAesquema){
     int lba=0;
     Bloque& busq= buffer->obtenerBloque(0,'L', 0); //LBA, L, pin empezamos buscando desde bloque 0 porq capaz esta ahí quien sabe :)
@@ -25,7 +88,7 @@ bool SistemaGestor::verificarEsquemaExiste(string nombreEsquema, int* LBAesquema
                         i++;
                     }
                     *LBAesquema = stoi(aux);
-                    buffer->liberarBloque(lba,false);
+                    buffer->liberarBloqueSinEscribir(lba);
                     return true;
                 }
             }
@@ -33,17 +96,17 @@ bool SistemaGestor::verificarEsquemaExiste(string nombreEsquema, int* LBAesquema
         i++;
         if(i==busq.datos.size()){
             if(busq.idsiguiente==0){
-                buffer->liberarBloque(lba,false);
+                buffer->liberarBloqueSinEscribir(lba);
                 return false;
             }else{
-                buffer->liberarBloque(lba,false);
+                buffer->liberarBloqueSinEscribir(lba);
                 lba=busq.idsiguiente;
                 busq= buffer->obtenerBloque(lba,'L', 0);
                 i=0;
             }
         }
     }
-    buffer->liberarBloque(lba,false);
+    buffer->liberarBloqueSinEscribir(lba);
     return false;
 }
 
@@ -106,35 +169,4 @@ int SistemaGestor::cargarEsquema(string nombreEsquema){
 
 void SistemaGestor::insertarNRegistro(int n, string nameArchivo, string nameEsquema){
 
-}
-
-string SistemaGestor::extraerBitmap(vector<char>& datos){
-    int indice = 0;
-    // Saltar la primera línea (cabecera)
-    while (indice < datos.size() && datos[indice] != '\n') indice++;
-    indice++;
-    // Saltar la segunda línea (cabecera)
-    while (indice < datos.size() && datos[indice] != '\n') indice++;
-    indice++;
-    // Extraer el bitmap hasta el siguiente salto de línea
-    string bitmap;
-    while (indice < datos.size() && datos[indice] != '\n') {
-        bitmap += datos[indice];
-        indice++;
-    }
-    return bitmap;
-}
-
-void SistemaGestor::actualizarBitmapEnDatos(vector<char>& datos, const string& nuevoBitmap){
-    int indice = 0;
-    // Saltar la primera línea (cabecera)
-    while (indice < datos.size() && datos[indice] != '\n') indice++;
-    indice++;
-    // Saltar la segunda línea (cabecera)
-    while (indice < datos.size() && datos[indice] != '\n') indice++;
-    indice++;
-    // Ahora 'indice' apunta al inicio del bitmap
-    for (size_t i = 0; i < nuevoBitmap.size() && (indice + i) < datos.size(); ++i) {
-        datos[indice + i] = nuevoBitmap[i];
-    }
 }

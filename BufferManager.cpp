@@ -53,5 +53,10 @@ Bloque& BufferManager::obtenerBloque(int LBA, char modo, bool pin) { //Lectura o
 void BufferManager::liberarBloque(int LBA, bool modificado) { //true si esta modificado o algo
     if (modificado) {
         escribirBloque(LBA);
+        Bloques.erase(LBA);
     }
+}
+
+void BufferManager::liberarBLoqueSinEscribir(int LBA){
+  Bloques.erase(LBA);
 }
