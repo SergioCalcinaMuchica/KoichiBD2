@@ -3,6 +3,7 @@
 #include "MicroControlador.h"
 #include "BufferManager.h"
 #include "Bloque.h"
+#include "SistemaGestor.h"
 using namespace std;
 Disco disco;
 string extraerBitmap(const vector<char>& datos) {
@@ -118,6 +119,7 @@ int main() {
     }
     MicroControlador microControlador = MicroControlador(&disco);
     BufferManager buffer = BufferManager(&disco, &microControlador);
+    SistemaGestor koichiBD = SistemaGestor(&buffer);
     ejecutando = true;
     while (ejecutando) {
         cout << "\n1) Mostrar informacion del disco\n";
@@ -138,7 +140,7 @@ int main() {
                 disco.mostrarArbol("Disco");
                 break;
             case 4:
-                insertaresquema(buffer);
+                koichiBD.insertarEsquema();
                 break;
             default:
                 cout << "Opcion invalida.\n";
@@ -147,4 +149,4 @@ int main() {
     return 0;
 }
 
-//g++ main.cpp Microcontrolador.cpp Disco.cpp BufferManager.cpp Bloque.cpp -o main
+//g++ main.cpp Microcontrolador.cpp Disco.cpp BufferManager.cpp Bloque.cpp SistemaGestor.cpp -o main
