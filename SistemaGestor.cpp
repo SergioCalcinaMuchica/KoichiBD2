@@ -117,8 +117,7 @@ void SistemaGestor::insertarEsquema(){
             cin>>aux;
             ingreso = ingreso + aux + "@"; //fin de esquema
         }
-        //int indice = BloqueNDisponible(); CAMBIAR
-        int indice=1;
+        int indice = BloqueNDisponible();
         if(indice==0){
             cout<<"TODOS BLOQUES LLENOS, ERROR"<<endl;
             return;
@@ -133,7 +132,7 @@ void SistemaGestor::insertarEsquema(){
                 busq= buffer->obtenerBloque(lba,'L', 0);
             }
             cout<<"BAN1"<<endl;
-            if((busq.espacio_disponible-(lineaMeta.size()))<0){ //+1
+            if((busq.espacio_disponible-(lineaMeta.size()))<0){ //ns +1
                 lba= busq.idsiguiente;
             }
             buffer->liberarBloqueSinEscribir(lba);
@@ -141,28 +140,16 @@ void SistemaGestor::insertarEsquema(){
             for(int i=0;i<lineaMeta.size();i++){
                 busq.datos.push_back(lineaMeta[i]);
             }
-            cout<<"BAN2"<<endl;
-            cout<<"Espacio:"<<busq.espacio_disponible<<endl;
-            cout<<busq.espacio_disponible-lineaMeta.size()<<endl;
+
             busq.putEspacio_disponible(busq.espacio_disponible-(lineaMeta.size()));
             buffer->liberarBloque(lba,true);
-
-            //ingresar esquema de la relacion
-            cout<<"BAN3"<<endl;
             lba=indice;
-            cout<<indice;
-            busq= buffer->obtenerBloque(lba,'W', 0);
+            Bloque& busq2= buffer->obtenerBloque(lba,'W', 0);
             for(int i=0;i<ingreso.size();i++){
-                busq.datos.push_back(ingreso[i]);
+                busq2.datos.push_back(ingreso[i]);
             }
-            cout<<busq.espacio_disponible-ingreso.size()<<endl;
-            busq.putEspacio_disponible(busq.espacio_disponible-(ingreso.size()));
-            for(int i=0;i<busq.datos.size();i++){
-                cout<<busq.datos[i];
-            }
-            cout<<endl;
+            busq2.putEspacio_disponible(busq2.espacio_disponible-(ingreso.size()));
             buffer->liberarBloque(lba,true);
-            cout<<"er"<<endl;
             return;
         }
         return;
