@@ -14,5 +14,5 @@ class Bloque{
     void putIdSiguiente(int);
     void putEspacio_disponible(int);
     Bloque() {} // Constructor por defecto
-    Bloque(int);
+    Bloque(int, std::vector<char>);
 };

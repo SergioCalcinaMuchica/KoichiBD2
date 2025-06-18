@@ -6,6 +6,7 @@
 #include "SistemaGestor.h"
 using namespace std;
 Disco disco;
+/*
 string extraerBitmap(const vector<char>& datos) {
     int indice = 0;
     // Saltar la primera línea (cabecera)
@@ -36,7 +37,7 @@ void actualizarBitmapEnDatos(vector<char>& datos, const string& nuevoBitmap) {
         datos[indice + i] = nuevoBitmap[i];
     }
 }
-/*
+
 bool suficienteEspacio(int bloquecomp, BufferManager& buffer, string m){
     int tamBloque=(buffer.disco->sectoresPorBloque)*(buffer.disco->capSector);
     if(m.size()+buffer.Bloques[bloquecomp].size()>tamBloque){
@@ -45,7 +46,7 @@ bool suficienteEspacio(int bloquecomp, BufferManager& buffer, string m){
         return true;
     }
 }
-*/
+
 void insertaresquema(BufferManager& buffer) {
     string nombreEsquema;
     char variableFijo;
@@ -92,7 +93,7 @@ void insertaresquema(BufferManager& buffer) {
         return;
     }
 }
-
+*/
 
 int main() {
     int opc = 0;
@@ -127,6 +128,7 @@ int main() {
         cout << "3) Mostrar arbol del disco\n";
         cout << "4) Insertar esquema\n";
         cout << "5) Insertar datos\n";
+        cout << "6) Pruebas varias\n";
         cout << "Seleccione una opcion: ";
         cin >> opc;
         switch (opc) {
@@ -142,6 +144,10 @@ int main() {
             case 4:
                 koichiBD.insertarEsquema();
                 break;
+            case 6:{
+                cout<<koichiBD.BloqueNDisponible();
+                break;
+            }
             default:
                 cout << "Opcion invalida.\n";
         }

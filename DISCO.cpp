@@ -101,6 +101,7 @@ void Disco::crearDisco() {
         espacioTotal=espacioTotal - contarDigitos(espacioTotal)-indiceBloque;
         fprintf(metadata,"%i#%i#%i#%i#%i#%i\n", platos, pistas, sectores, capSector, sectoresPorBloque, espacioTotal);//espacio disponible
         long posBit2=ftell(metadata);
+        cout<<"pos"<<posBit2<<endl;
         fclose(metadata);
         metadata = fopen("Disco\\Plato0\\Superficie0\\Pista0\\Sector0.txt", "rb"); // Modo binario
         long bytesOcupados;
@@ -131,7 +132,6 @@ void Disco::crearDisco() {
                 fclose(metadata);
                 LBA++;
                 if(LBA%sectoresPorBloque==0){ //cambio de bloque aqui hacer los cambios en los campos correspondientes
-                    cout<<"si"<<LBA<<endl;
                     contadorBloque++;
                     unsoloBloque=false;
 
@@ -146,8 +146,6 @@ void Disco::crearDisco() {
                     fputc('1', metadata);
                     fseek(metadata,posEspacioDisponibleBloque,SEEK_SET);
                     string espaux= to_string(capcdbloque - (acumBloque-1));
-                    cout<<capcdbloque<<"---"<<acumBloque<<endl;
-                    cout<<espaux<<endl;
                     int espaxiosaux=contarDigitos(capcdbloque)-contarDigitos(capcdbloque - (acumBloque-1));
                     for(int i=0;i<espaux.size();i++){
                         fputc(espaux[i],metadata);
@@ -226,14 +224,38 @@ void Disco::crearDisco() {
         }
         
         fclose(metadata);
+
+        int contZ=posBit2; //va sumando la cantidad de unos que se estan agregando para veridicar que no sobrepase le tamaño de un sector
+        int c;
+        LBA=0;
         metadata = fopen("Disco\\Plato0\\Superficie0\\Pista0\\Sector0.txt", "r+b");
+        fseek(metadata,posBit2,SEEK_SET);
         while(contadorBloque!=0){ //provisional pero deberia mejorar, imaginate que toque poner 1 a bits que esten a otro bloque. PENDIENTE
-            fseek(metadata,posBit2,SEEK_SET);
-            posBit2++;
+            if(contZ%espacioBloque==0){
+                fclose(metadata);
+                LBA++;
+                pre.ObtenerRuta(LBA);
+                sprintf(direccion, "Disco\\Plato%d\\Superficie%d\\Pista%d\\Sector%d.txt", pre.ruta[0], pre.ruta[1], pre.ruta[2], pre.ruta[3]);
+                metadata = fopen(direccion, "r+b");
+                int auxindice=0;
+                while((c = getc(metadata))!='\n'){
+                    auxindice++;
+                    contZ++;
+                }
+                contZ++;
+                fseek(metadata, 1, SEEK_CUR);
+                fseek(metadata, -1, SEEK_CUR);
+            }else if(contZ%capSector==0){
+                fclose(metadata);
+                LBA++;
+                pre.ObtenerRuta(LBA);
+                sprintf(direccion, "Disco\\Plato%d\\Superficie%d\\Pista%d\\Sector%d.txt", pre.ruta[0], pre.ruta[1], pre.ruta[2], pre.ruta[3]);
+                metadata = fopen(direccion, "r+b");
+            }
             fputc('1', metadata);
+            contZ++;
             contadorBloque--;
         }
-
         fclose(metadata);
     }
 }

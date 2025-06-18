@@ -5,14 +5,14 @@ SistemaGestor::SistemaGestor(BufferManager* bf){
     sectoresPorBloque = buffer->sectoresPorBloque;
 }
 
-int BloqueNDisponible(){ //devolvera el indice del siguiente bloque disponible
+int SistemaGestor::BloqueNDisponible(){ //devolvera el indice del siguiente bloque disponible y lo llenara con 1 indicando q esta ocupado
   int lba=0;
   bool encontrado=false;
   int indice=0; //posicion, LBA del bloque p
   int i=0;
   while(encontrado==false){
-    i=0;
-    Bloque& busq = buffer->obtenerBloque(lba,'L',0);
+    i=0;
+    Bloque& busq= buffer->obtenerBloque(0,'W', 0);
     while(busq.datos[i]!='\n') i++;
     i++;
     while(busq.datos[i]!='\n') i++;
@@ -23,7 +23,10 @@ int BloqueNDisponible(){ //devolvera el indice del siguiente bloque disponible
       if(i==busq.datos.size()){
         break; //se termino el bloque, hay que verificar si sigue el bitmap en otro bloque y si no es así entonces ya no hay bloques disponibles
       }
-      if(busq.datos[i]==1){
+      if(busq.datos[i]=='0'){
+        busq.datos[i]='1';
+        cout<<"Indice:"<<indice<<endl;
+        buffer->liberarBloque(lba,true);
         return indice;
       }
     }
@@ -31,47 +34,19 @@ int BloqueNDisponible(){ //devolvera el indice del siguiente bloque disponible
       cout<<"YA NO HAY BLOQUES DISPONIBLES";
       return 0; //indicador, 0 es si no hay bloques disponibles
     }
-    busq.liberarBloqueSinEscribir(lba);
+    buffer->liberarBloqueSinEscribir(lba);
     lba=busq.idsiguiente;
   }
-}
-
-//contador del bitmap para saber q bloque esta disponible funcion que devolveria 
-string SistemaGestor::extraerBitmap(vector<char>& datos){ //
-    int indice = 0;
-    // Saltar la primera línea (cabecera)
-    while (indice < datos.size() && datos[indice] != '\n') indice++;
-    indice++;
-    // Saltar la segunda línea (cabecera)
-    while (indice < datos.size() && datos[indice] != '\n') indice++;
-    indice++;
-    // Extraer el bitmap hasta el siguiente salto de línea
-    string bitmap;
-    while (indice < datos.size() && datos[indice] != '\n') {
-        bitmap += datos[indice];
-        indice++;
-    }
-    return bitmap;
-}
-
-void SistemaGestor::actualizarBitmapEnDatos(vector<char>& datos, const string& nuevoBitmap){
-    int indice = 0;
-    // Saltar la primera línea (cabecera)
-    while (indice < datos.size() && datos[indice] != '\n') indice++;
-    indice++;
-    // Saltar la segunda línea (cabecera)
-    while (indice < datos.size() && datos[indice] != '\n') indice++;
-    indice++;
-    // Ahora 'indice' apunta al inicio del bitmap
-    for (size_t i = 0; i < nuevoBitmap.size() && (indice + i) < datos.size(); ++i) {
-        datos[indice + i] = nuevoBitmap[i];
-    }
+  cout<<"ERROR BLOQUENDISPONIBle"<<endl;   
+  return -1;
 }
 
 bool SistemaGestor::verificarEsquemaExiste(string nombreEsquema, int* LBAesquema){
+    cout<<"inicio verificacion"<<endl;
     int lba=0;
     Bloque& busq= buffer->obtenerBloque(0,'L', 0); //LBA, L, pin empezamos buscando desde bloque 0 porq capaz esta ahí quien sabe :)
     int i=0;
+    cout<<"b1"<<endl;
     while(i<busq.datos.size()){
         if(busq.datos[i]==nombreEsquema[0]){
             for(int j=1;j<nombreEsquema.size();j++){
@@ -87,6 +62,7 @@ bool SistemaGestor::verificarEsquemaExiste(string nombreEsquema, int* LBAesquema
                         aux=aux+busq.datos[i];
                         i++;
                     }
+                    cout<<"aux:"<<aux;
                     *LBAesquema = stoi(aux);
                     buffer->liberarBloqueSinEscribir(lba);
                     return true;
@@ -141,26 +117,60 @@ void SistemaGestor::insertarEsquema(){
             cin>>aux;
             ingreso = ingreso + aux + "@"; //fin de esquema
         }
-        //revisar si hay bloque disponible en base al bitmap
-        buffer->cargarBloque(0); //cargar bloque 0 que es el bitmap
-        vector<char>& datos = buffer->Bloques[0].datos;
-        string bitmapt= extraerBitmap(datos);
-        if(bitmapt.find('0') == string::npos){
-            cout<<"TODOS BLOQUES LLENOS"<<endl;
+        //int indice = BloqueNDisponible(); CAMBIAR
+        int indice=1;
+        if(indice==0){
+            cout<<"TODOS BLOQUES LLENOS, ERROR"<<endl;
             return;
         }else{
-            int indice=bitmapt.find('0');
-            bitmapt[indice]='1';
-            actualizarBitmapEnDatos(datos,bitmapt);
             string lineaMeta = nombreEsquema + "#" + to_string(indice) + "\n";
-            if(datos.size())
-            datos.insert(datos.end(), lineaMeta.begin(), lineaMeta.end());
-            buffer->escribirBloque(0);
+            
+            int lba=0;
+            Bloque& busq= buffer->obtenerBloque(lba,'L', 0);
+            while(busq.idsiguiente!=0){ //VAMOS AL ID DEL ULTIMO BLOQUE DE LA METADATA por asi decirlo, donde deberiamos añadir el esquema
+                buffer->liberarBloqueSinEscribir(lba);
+                lba=busq.idsiguiente;
+                busq= buffer->obtenerBloque(lba,'L', 0);
+            }
+            cout<<"BAN1"<<endl;
+            if((busq.espacio_disponible-(lineaMeta.size()))<0){ //+1
+                lba= busq.idsiguiente;
+            }
+            buffer->liberarBloqueSinEscribir(lba);
+            busq= buffer->obtenerBloque(lba,'W', 0);
+            for(int i=0;i<lineaMeta.size();i++){
+                busq.datos.push_back(lineaMeta[i]);
+            }
+            cout<<"BAN2"<<endl;
+            cout<<"Espacio:"<<busq.espacio_disponible<<endl;
+            cout<<busq.espacio_disponible-lineaMeta.size()<<endl;
+            busq.putEspacio_disponible(busq.espacio_disponible-(lineaMeta.size()));
+            buffer->liberarBloque(lba,true);
+
+            //ingresar esquema de la relacion
+            cout<<"BAN3"<<endl;
+            lba=indice;
+            cout<<indice;
+            busq= buffer->obtenerBloque(lba,'W', 0);
+            for(int i=0;i<ingreso.size();i++){
+                busq.datos.push_back(ingreso[i]);
+            }
+            cout<<busq.espacio_disponible-ingreso.size()<<endl;
+            busq.putEspacio_disponible(busq.espacio_disponible-(ingreso.size()));
+            for(int i=0;i<busq.datos.size();i++){
+                cout<<busq.datos[i];
+            }
+            cout<<endl;
+            buffer->liberarBloque(lba,true);
+            cout<<"er"<<endl;
+            return;
         }
+        return;
     }else{
         //logica para variable, aun no implementada
         return;
     }
+    return;
 }
 
 int SistemaGestor::cargarEsquema(string nombreEsquema){

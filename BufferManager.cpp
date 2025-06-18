@@ -1,4 +1,5 @@
 #include "BufferManager.h"
+#include <iostream>
 //buffer basico para manejar bloques de disco
 BufferManager::BufferManager(Disco* d, MicroControlador* mc){
     disco=d;
@@ -21,26 +22,31 @@ void BufferManager::cargarBloque(int LBA) {
             }
         }
 
-        Bloques[LBA] = Bloque(LBA);
-        Bloques[LBA].datos = bloqueCompleto;
+        Bloques[LBA] = Bloque(LBA,bloqueCompleto);
     }
 }
 
 void BufferManager::escribirBloque(int LBA) {
-    int tamSector = disco->capSector;
     int offset = 0;
+    cout<<LBA<<endl;
     vector<char>& bloqueCompleto = Bloques[LBA].datos;
+    for(int i=0;i<Bloques[LBA].datos.size();i++){
+        cout<<Bloques[LBA].datos[i];
+    }
+    cout<<endl;
     int tamTotal = bloqueCompleto.size();
-
-    for(int i=0;i<disco->sectoresPorBloque;i++){
-        int sectorLBA = LBA + i;
+    cout<<"tamTotal"<<tamTotal<<endl;
+    for(int i=0;i<sectoresPorBloque;i++){
+        int sectorLBA = (LBA*sectoresPorBloque) + i;
         micro->ObtenerRuta(sectorLBA);
         int bytesRestantes = tamTotal - offset;
+        cout<<"bytesRestantes"<<bytesRestantes<<endl;
         int bytesAEscribir = (bytesRestantes >= tamSector) ? tamSector : bytesRestantes;
-
+        cout<<"bytesEscribir"<<bytesAEscribir<<endl;
         // Solo escribimos los datos que quedan disponibles
         vector<char> datosSector(bloqueCompleto.begin() + offset, bloqueCompleto.begin() + offset + bytesAEscribir);
         disco->escribirSector(datosSector, micro->ruta);
+        cout<<"p1"<<endl;
         offset += bytesAEscribir;
     }
 }
@@ -57,6 +63,6 @@ void BufferManager::liberarBloque(int LBA, bool modificado) { //true si esta mod
     }
 }
 
-void BufferManager::liberarBLoqueSinEscribir(int LBA){
+void BufferManager::liberarBloqueSinEscribir(int LBA){
   Bloques.erase(LBA);
 }
