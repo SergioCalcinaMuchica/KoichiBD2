@@ -14,7 +14,6 @@ void BufferManager::cargarBloque(int LBA) {
 
         for (int i = 0; i < disco->sectoresPorBloque; i++) {
             int sectorLBA = (LBA*sectoresPorBloque) + i;
-            cout<<"sectorLBA: "<<sectorLBA<<endl;
             micro->ObtenerRuta(sectorLBA);
             // Leer el contenido del sector desde el archivo
             vector<char> aux = disco->leerSector(micro->ruta);
@@ -29,14 +28,8 @@ void BufferManager::cargarBloque(int LBA) {
 
 void BufferManager::escribirBloque(int LBA) {
     int offset = 0;
-    cout<<LBA<<endl;
     vector<char>& bloqueCompleto = Bloques[LBA].datos;
-    for(int i=0;i<Bloques[LBA].datos.size();i++){
-        cout<<Bloques[LBA].datos[i];
-    }
-    cout<<endl;
     int tamTotal = bloqueCompleto.size();
-    cout<<"tamTotal"<<tamTotal<<endl;
     for(int i=0;i<sectoresPorBloque;i++){
         int sectorLBA = (LBA*sectoresPorBloque) + i;
         micro->ObtenerRuta(sectorLBA);
@@ -45,7 +38,6 @@ void BufferManager::escribirBloque(int LBA) {
         // Solo escribimos los datos que quedan disponibles
         vector<char> datosSector(bloqueCompleto.begin() + offset, bloqueCompleto.begin() + offset + bytesAEscribir);
         disco->escribirSector(datosSector, micro->ruta);
-        cout<<"p1"<<endl;
         offset += bytesAEscribir;
     }
 }
