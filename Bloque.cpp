@@ -39,39 +39,6 @@ void Bloque::ObtenerDatosCabecera(){ //Obtiene datos de la cabecera del bloque
         i++;
     }
     espacio_disponible=stoi(aux);
-    cout<<id<<"-"<<disponible<<"-"<<idsiguiente<<"-"<<espacio_disponible<<endl;
-    /*
-    while(datos[i]!='\n'){
-        while(datos[i]!='#'){
-            if(datos[i]=='-'||datos[i]=='\n'){
-                if(cond==1){
-                    cout<<"bb1"<<endl;
-                    disponible=stoi(aux);
-                }
-                if(cond==2){
-                    if(aux==""){
-                        idsiguiente=0;
-                    }else{
-                        cout<<"bb2"<<endl;
-                        idsiguiente=stoi(aux);
-                    }
-                }
-                if(cond==3){
-                    cout<<"bb3"<<endl;
-                    cout<<aux;
-                    espacio_disponible=stoi(aux);
-                }
-                break;
-            }
-            aux=aux+datos[i];
-            cout<<aux<<endl;
-            i++;
-        }
-        cond++;
-        aux="";
-        i++;
-    }
-    */
 }
 
 Bloque::Bloque(int id2, vector<char> dates){

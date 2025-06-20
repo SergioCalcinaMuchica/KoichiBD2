@@ -13,9 +13,9 @@ vector<char> BufferManager::cargarBloque(int LBA) { //carga un bloque completo a
     for (int i = 0; i < disco->sectoresPorBloque; i++) {
         int sectorLBA = (LBA*sectoresPorBloque) + i;
         micro->ObtenerRuta(sectorLBA);
-        vector<char> aux = disco->leerSector(micro->ruta);
+        vector<char> aux = disco->leerSector(micro->ruta); //indicador de vacios
         if (aux.empty()) {
-        std::cerr << "Sector vacío: " << micro->ruta << std::endl;
+        std::cerr << "-" << micro->ruta << std::endl;
         } else {
             bloqueCompleto.insert(bloqueCompleto.end(), aux.begin(), aux.end());
         }

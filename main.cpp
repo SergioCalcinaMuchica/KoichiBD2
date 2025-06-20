@@ -82,7 +82,7 @@ int main() {
                             int LBA;
                             char modo;
                             bool pinear;
-                            cout << "Ingrese LBA: ";
+                            cout << "Ingrese ID de pagina: ";
                             cin >> LBA;
                             cout << "Ingrese modo (L/E): ";
                             cin >> modo;

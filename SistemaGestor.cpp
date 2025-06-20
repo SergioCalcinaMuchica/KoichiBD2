@@ -45,7 +45,6 @@ int SistemaGestor::BloqueNDisponible(){ //devolvera el indice del siguiente bloq
       }
       if(busq.datos[i]=='0'){
         busq.datos[i]='1';
-        cout<<"Indice:"<<indice<<endl;
         buffer->liberarBloque(lba,true);
         return indice;
       }
@@ -170,7 +169,6 @@ void SistemaGestor::insertarEsquema(){
 
             //BITMAP
             contTAMregistro++; //para añadir /n para que se vea ordenado los registros
-            cout<<contTAMregistro<<endl;
             Bloque& busq3= buffer->obtenerBloque(lba,'W', 0);
             int cantRegistros = busq3.espacio_disponible/contTAMregistro; //capacidad de registros por bloque
             cantRegistros = (busq3.espacio_disponible-cantRegistros-1)/contTAMregistro; //capacidad de registros por bloque, -1 por el @
