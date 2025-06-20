@@ -330,12 +330,14 @@ void Disco::escribirSector(vector<char> &datos, int* ruta) {
 vector<char> Disco::leerSector(int* ruta) {
     char direccion[300];
     sprintf(direccion, "Disco\\Plato%d\\Superficie%d\\Pista%d\\Sector%d.txt", ruta[0], ruta[1], ruta[2], ruta[3]);
+    cout<<direccion<<endl;
     FILE* archivo = fopen(direccion, "rb");
     vector<char> datos;
     if (archivo) {
         char byte;
         while (fread(&byte, sizeof(char), 1, archivo)) {
             datos.push_back(byte);
+            cout<<"-"<<byte;
         }
         fclose(archivo);
         return datos;

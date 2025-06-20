@@ -8,27 +8,25 @@ BufferManager::BufferManager(Disco* d, MicroControlador* mc){
     sectoresPorBloque = disco->sectoresPorBloque;
 }
 
-void BufferManager::cargarBloque(int LBA) {
-    if (Bloques.find(LBA) == Bloques.end()) {
-        vector<char> bloqueCompleto;
-
-        for (int i = 0; i < disco->sectoresPorBloque; i++) {
-            int sectorLBA = (LBA*sectoresPorBloque) + i;
-            micro->ObtenerRuta(sectorLBA);
-            // Leer el contenido del sector desde el archivo
-            vector<char> aux = disco->leerSector(micro->ruta);
-            if(aux.size()!=0){
-                bloqueCompleto.insert(bloqueCompleto.end(), aux.begin(), aux.end());
-            }
+vector<char> BufferManager::cargarBloque(int LBA) { //carga un bloque completo a partir de su LBA
+    vector<char> bloqueCompleto;
+    for (int i = 0; i < disco->sectoresPorBloque; i++) {
+        int sectorLBA = (LBA*sectoresPorBloque) + i;
+        micro->ObtenerRuta(sectorLBA);
+        vector<char> aux = disco->leerSector(micro->ruta);
+        if (aux.empty()) {
+        std::cerr << "Sector vacío: " << micro->ruta << std::endl;
+        } else {
+            bloqueCompleto.insert(bloqueCompleto.end(), aux.begin(), aux.end());
         }
-
-        Bloques[LBA] = Bloque(LBA,bloqueCompleto);
     }
+    return bloqueCompleto;
 }
 
-void BufferManager::escribirBloque(int LBA) {
+void BufferManager::escribirBloque(int LBA, vector<char> datos) {
     int offset = 0;
-    vector<char>& bloqueCompleto = Bloques[LBA].datos;
+    vector<char>& bloqueCompleto = datos;
+
     int tamTotal = bloqueCompleto.size();
     for(int i=0;i<sectoresPorBloque;i++){
         int sectorLBA = (LBA*sectoresPorBloque) + i;
@@ -49,7 +47,7 @@ Bloque& BufferManager::obtenerBloque(int LBA, char modo, bool pin) { //Lectura o
 
 void BufferManager::liberarBloque(int LBA, bool modificado) { //true si esta modificado o algo
     if (modificado) {
-        escribirBloque(LBA);
+        //escribirBloque(LBA);
         Bloques.erase(LBA);
     }
 }
